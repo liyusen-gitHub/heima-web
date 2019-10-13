@@ -3,27 +3,31 @@
       <van-nav-bar
         title="登录"
       />
-      <!-- <ValidationObserver ref="loginForm"> -->
+      <ValidationObserver ref="loginForm">
         <van-cell-group>
-          <!-- <ValidationProvider  name="手机号" rules="required" v-slot="{ errors }"> -->
+          <ValidationProvider  name="手机号" rules="required|phone" v-slot="{ errors }">
             <van-field
               v-model="user.mobile"
               required
               clearable
-              label="用户名"
-              placeholder="请输入用户名"
+              label="手机号"
+              placeholder="请输入手机号"
+              :error-message="errors[0]"
             />
-          <!-- </ValidationProvider> -->
+          </ValidationProvider>
 
-          <van-field
-            v-model="user.code"
-            type="password"
-            label="密码"
-            placeholder="请输入密码"
-            required
-          />
+          <ValidationProvider name="验证码" rules="required|max:6" v-slot="{ errors }">
+            <van-field
+              v-model="user.code"
+              type="password"
+              label="验证码"
+              placeholder="请输入验证码"
+              :error-message="errors[0]"
+              required
+            />
+          </ValidationProvider>
         </van-cell-group>
-      <!-- </ValidationObserver> -->
+      </ValidationObserver>
       <div class="loginbtn">
         <van-button type="info" @click="login">登录</van-button>
       </div>
@@ -50,6 +54,12 @@ export default {
   },
   methods: {
     async login () {
+      const isValid = await this.$refs.loginForm.validate()
+      console.log(isValid)
+
+      if (!isValid) {
+        return
+      }
       const toast = this.$toast.loading({
         duration: 1000, // 持续展示 toast
         forbidClick: true, // 禁用背景点击
@@ -57,10 +67,8 @@ export default {
         message: '登陆中...'
       })
       try {
-        // console.log(this.user)
         const { data } = await login(this.user)
-        // console.log('1231233')
-        // console.log(data)
+
         // 将用户token保存到容器中
         this.$store.commit('setUser', data.data)
         // 保存用户token
