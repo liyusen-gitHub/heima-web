@@ -2,7 +2,25 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
-import { Button, NavBar, Field, Cell, CellGroup, Toast, Image, Tabbar, TabbarItem, Lazyload, Tab, Tabs, PullRefresh, List, Grid, GridItem } from 'vant'
+import { Button,
+  NavBar,
+  Field,
+  Cell,
+  CellGroup,
+  Toast,
+  Image,
+  Tabbar,
+  TabbarItem,
+  Lazyload,
+  Tab,
+  Tabs,
+  PullRefresh,
+  List,
+  Grid,
+  GridItem,
+  Popup,
+  Icon
+} from 'vant'
 import { ValidationProvider, ValidationObserver, extend } from 'vee-validate'
 import zhCN from 'vee-validate/dist/locale/zh_CN' // 加载验证插件的语言包
 import * as rules from 'vee-validate/dist/rules'
@@ -49,6 +67,8 @@ Vue.use(Button)
   .use(GridItem)
   .use(Lazyload)
   .use(Image)
+  .use(Popup)
+  .use(Icon)
 
 Vue.config.productionTip = false
 
