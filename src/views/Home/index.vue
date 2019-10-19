@@ -1,6 +1,15 @@
 <template>
   <div class="home">
-    <van-nav-bar title="首页" fixed />
+    <van-nav-bar fixed >
+       <van-button
+        class="search-btn"
+        slot="title"
+        round
+        type="info"
+        size="small"
+        @click="$router.push('/search')"
+      >搜索</van-button>
+    </van-nav-bar>
     <van-tabs v-model="active" swipeable>
       <!-- 面包按钮 -->
       <div slot="nav-right" class="wap-nav" @click="show = true">
@@ -42,15 +51,31 @@
     <van-popup v-model="show" round closeable position="bottom" :style="{ height: '90%' }">
       <div class="channel-container">
         <van-cell title="我的频道" :border="false">
-          <van-button type="danger" size="mini">编辑</van-button>
+          <van-button
+            type="danger"
+            size="mini"
+            @click="isEditShow=!isEditShow"
+          >{{isEditShow?'完成':'编辑'}}</van-button>
         </van-cell>
         <van-grid :gutter="10">
-          <van-grid-item v-for="(item,index) in channellist" :key="index" :text="item.name" />
+          <van-grid-item
+            v-for="(item,index) in channellist"
+            :key="index"
+            :text="item.name"
+            @click="onMychannelclick(index)"
+          >
+            <van-icon v-show="isEditShow" class="close-icon" slot="icon" name="close" />
+          </van-grid-item>
         </van-grid>
 
         <van-cell title="推荐频道" :border="false" />
         <van-grid :gutter="10" @click="alert('item')">
-          <van-grid-item v-for="(item,index) in reloadAllChannels" :key="index" :text="item.name" />
+          <van-grid-item
+            v-for="(item,index) in reloadAllChannels"
+            :key="index"
+            :text="item.name"
+            @click="onAddchannel(item)"
+          />
         </van-grid>
       </div>
     </van-popup>
@@ -63,6 +88,7 @@ import { getChannels, getAllChannels } from '@/api/channels'
 // 导入频道文章接口
 import { getArticles } from '@/api/article'
 // import { relativeTime } from '@/api/utils/date'
+import { setItem, getItem } from '@/utils/storage'
 export default {
   name: 'homeIndex',
   data () {
@@ -71,9 +97,10 @@ export default {
       // list: [],
       // loading: false,
       // finished: false,
-      channellist: [],
+      channellist: getItem('channels') || [],
       allchannellist: [],
-      show: false
+      show: false,
+      isEditShow: false
     }
   },
   created () {
@@ -95,7 +122,44 @@ export default {
       return arr
     }
   },
+  watch: {
+    channellist (newVal) {
+      setItem('channels', newVal)
+    }
+  },
   methods: {
+    // 点击我的频道进入对应频道列表
+    onMychannelclick (index) {
+      console.log(index)
+
+      // 如果修改按钮是修改状态的话
+      if (this.isEditShow) {
+        // 删除点击的频道
+        this.channellist.splice(index, 1)
+        this.onLoad()
+      } else {
+        this.switchChannel(index)
+      }
+    },
+    switchChannel (index) {
+      this.active = index
+      this.show = false
+    },
+    // 将推荐频道添加到我的频道列表
+    onAddchannel (channel) {
+      console.log(channel)
+
+      this.channellist.push(channel)
+    },
+    extendData (channels) {
+      channels.forEach(channel => {
+        channel.articles = [] // 存储频道的文章列表
+        channel.finished = false // 存储频道的加载结束状态
+        channel.loading = false // 存储频道的加载更多的 loading 状态
+        channel.timestamp = null // 存储获取频道下一页的时间戳
+        channel.isPullDownLoading = false // 存储频道的下拉刷新 loading 状态
+      })
+    },
     // 下拉刷新
     async onRefresh () {
       const articleschannel = this.channellist[this.active]
@@ -112,6 +176,7 @@ export default {
     async loadAllChannels () {
       const { data } = await getAllChannels()
       // console.log(data)
+      this.extendData(data.data.channels)
       this.allchannellist = data.data.channels
     },
     // 获取频道
@@ -121,15 +186,15 @@ export default {
       const { data } = await getChannels()
       // console.log(Date.now() + 'loadchannels')
       // console.log(data)
-
+      this.extendData(data.data.channels)
       // 给每个频道列表添加三个自己的参数
-      data.data.channels.forEach(channel => {
-        channel.articles = []
-        channel.loading = false
-        channel.finished = false
-        channel.timestamp = null // 存储获取频道下一页的时间戳
-        channel.isPullDownLoading = false // 存储频道的下拉刷新 loading 状态
-      })
+      // data.data.channels.forEach(channel => {
+      //   channel.articles = []
+      //   channel.loading = false
+      //   channel.finished = false
+      //   channel.timestamp = null // 存储获取频道下一页的时间戳
+      //   channel.isPullDownLoading = false // 存储频道的下拉刷新 loading 状态
+      // })
       // console.log(data.data.channels)
       this.channellist = data.data.channels
     },
@@ -216,7 +281,19 @@ export default {
     padding-top: 30px;
   }
 }
-.van-grid-item{
-  width:25%
+.van-grid-item {
+  width: 25%;
+}
+.channel-container {
+  padding-top: 30px;
+  .close-icon {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+  }
+}
+.search-btn{
+  width: 100%;
+  background: #5babfb;
 }
 </style>
